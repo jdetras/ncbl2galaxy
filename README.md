@@ -1,7 +1,7 @@
 # NCBI to Galaxy: Rice Variant Calling Automation
 
-[![CI](https://github.com/jdetras/ncbl2galaxy/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/ci.yml)
-[![Security](https://github.com/jdetras/ncbl2galaxy/actions/workflows/security.yml/badge.svg)](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/security.yml)
+[![CI](https://github.com/jdetras/ncbl2galaxy/actions/workflows/ci.yml/badge.svg)](https://github.com/jdetras/ncbl2galaxy/actions/workflows/ci.yml)
+[![Security](https://github.com/jdetras/ncbl2galaxy/actions/workflows/security.yml/badge.svg)](https://github.com/jdetras/ncbl2galaxy/actions/workflows/security.yml)
 
 Automates discovery of rice-related sequencing runs from NCBI literature and enqueues Galaxy variant-calling workflows with resumable execution and security-focused engineering defaults.
 
