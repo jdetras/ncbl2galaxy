@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ncbi-galaxy-rice-variant-calling"
+version = "0.1.0"
+description = "Automate discovery of rice-related NCBI sequencing data and enqueue Galaxy variant-calling workflows"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Project Maintainers" }
+]
+dependencies = [
+  "requests>=2.31.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.8.0",
+  "bandit>=1.7.10",
+  "pip-audit>=2.7.3",
+  "pre-commit>=3.8.0"
+]
+
+[tool.setuptools]
+py-modules = ["ncbi_to_galaxy"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

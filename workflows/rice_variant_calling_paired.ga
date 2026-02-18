@@ -1,0 +1,109 @@
+{
+  "a_galaxy_workflow": "true",
+  "annotation": "Rice variant calling workflow template (paired-end): reads pair + reference FASTA -> BAM -> VCF.",
+  "format-version": "0.1",
+  "name": "Rice Variant Calling Paired (BWA-MEM2 + FreeBayes)",
+  "steps": {
+    "0": {
+      "id": 0,
+      "type": "data_collection_input",
+      "name": "Input dataset collection",
+      "label": "Reads Pair",
+      "annotation": "Paired-end FASTQ dataset collection",
+      "position": {
+        "left": 40,
+        "top": 80
+      },
+      "tool_state": "{\"name\": \"Reads Pair\", \"optional\": false, \"collection_type\": \"paired\"}"
+    },
+    "1": {
+      "id": 1,
+      "type": "data_input",
+      "name": "Input dataset",
+      "label": "Reference FASTA",
+      "annotation": "Reference genome FASTA input",
+      "position": {
+        "left": 40,
+        "top": 250
+      },
+      "tool_state": "{\"name\": \"Reference FASTA\", \"optional\": false, \"format\": [\"fasta\"]}"
+    },
+    "2": {
+      "id": 2,
+      "type": "tool",
+      "name": "Map with BWA-MEM2",
+      "tool_id": "toolshed.g2.bx.psu.edu/repos/iuc/bwa_mem2/bwa_mem2",
+      "tool_version": "2.2.1+galaxy0",
+      "annotation": "Align paired reads to reference",
+      "position": {
+        "left": 340,
+        "top": 130
+      },
+      "tool_state": "{\"input_type_selector\": \"paired_collection\", \"reference_source|reference_source_selector\": \"history\"}",
+      "input_connections": {
+        "paired_input|input1": {
+          "id": 0,
+          "output_name": "output"
+        },
+        "reference_source|ref_file": {
+          "id": 1,
+          "output_name": "output"
+        }
+      }
+    },
+    "3": {
+      "id": 3,
+      "type": "tool",
+      "name": "Sort BAM",
+      "tool_id": "toolshed.g2.bx.psu.edu/repos/devteam/samtools_sort/samtools_sort",
+      "tool_version": "2.0.5",
+      "annotation": "Coordinate-sort alignments",
+      "position": {
+        "left": 640,
+        "top": 130
+      },
+      "tool_state": "{}",
+      "input_connections": {
+        "input1": {
+          "id": 2,
+          "output_name": "output"
+        }
+      }
+    },
+    "4": {
+      "id": 4,
+      "type": "tool",
+      "name": "FreeBayes",
+      "tool_id": "toolshed.g2.bx.psu.edu/repos/devteam/freebayes/freebayes",
+      "tool_version": "1.3.6+galaxy0",
+      "annotation": "Call variants",
+      "position": {
+        "left": 940,
+        "top": 130
+      },
+      "tool_state": "{\"reference_source\": \"history\"}",
+      "input_connections": {
+        "bam_input": {
+          "id": 3,
+          "output_name": "out_file1"
+        },
+        "ref_file": {
+          "id": 1,
+          "output_name": "output"
+        }
+      },
+      "workflow_outputs": [
+        {
+          "label": "Variants VCF",
+          "output_name": "output"
+        }
+      ]
+    }
+  },
+  "tags": [
+    "rice",
+    "paired-end",
+    "variant-calling",
+    "galaxy"
+  ]
+}

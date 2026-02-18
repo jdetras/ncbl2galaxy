@@ -1,0 +1,5 @@
+[allowlist]
+description = "Allow known test placeholders"
+paths = [
+  '''tests/.*'''
+]
