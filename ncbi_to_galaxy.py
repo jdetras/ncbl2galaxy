@@ -4,12 +4,11 @@ import json
 import re
 import sys
 import time
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 import requests
+from defusedxml import ElementTree as ET
 from requests import RequestException
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -24,13 +23,13 @@ class RunRecord:
     run_accession: str
     sample_accession: str
     library_layout: str
-    fastq_urls: List[str]
+    fastq_urls: list[str]
 
 
 class StateStore:
     def __init__(self, path: str):
         self.path = Path(path)
-        self.processed_runs: Set[str] = set()
+        self.processed_runs: set[str] = set()
 
     def load(self) -> None:
         if not self.path.exists():
@@ -60,14 +59,14 @@ def build_retry_session(total_retries: int = 5, backoff_factor: float = 1.0) -> 
     return session
 
 
-def chunked(values: List[str], size: int) -> List[List[str]]:
+def chunked(values: list[str], size: int) -> list[list[str]]:
     return [values[i : i + size] for i in range(0, len(values), size)]
 
 
 def ncbi_get(
     session: requests.Session,
     endpoint: str,
-    params: Dict[str, str],
+    params: dict[str, str],
     timeout: int = 60,
 ) -> requests.Response:
     resp = session.get(f"{EUTILS_BASE}/{endpoint}", params=params, timeout=timeout)
@@ -79,9 +78,9 @@ def esearch_pubmed(
     session: requests.Session,
     query: str,
     retmax: int,
-    email: Optional[str],
-    ncbi_api_key: Optional[str],
-) -> List[str]:
+    email: str | None,
+    ncbi_api_key: str | None,
+) -> list[str]:
     params = {
         "db": "pubmed",
         "term": query,
@@ -99,11 +98,11 @@ def esearch_pubmed(
 
 def elink_pubmed_to_sra(
     session: requests.Session,
-    pmids: List[str],
-    email: Optional[str],
-    ncbi_api_key: Optional[str],
-) -> Set[str]:
-    sra_ids: Set[str] = set()
+    pmids: list[str],
+    email: str | None,
+    ncbi_api_key: str | None,
+) -> set[str]:
+    sra_ids: set[str] = set()
     for batch in chunked(pmids, 200):
         params = {
             "dbfrom": "pubmed",
@@ -127,11 +126,11 @@ def elink_pubmed_to_sra(
 
 def esummary_sra_runs(
     session: requests.Session,
-    sra_ids: List[str],
-    email: Optional[str],
-    ncbi_api_key: Optional[str],
-) -> Set[str]:
-    runs: Set[str] = set()
+    sra_ids: list[str],
+    email: str | None,
+    ncbi_api_key: str | None,
+) -> set[str]:
+    runs: set[str] = set()
     for batch in chunked(sra_ids, 200):
         params = {
             "db": "sra",
@@ -152,7 +151,9 @@ def esummary_sra_runs(
     return runs
 
 
-def ena_run_record(session: requests.Session, run_accession: str, timeout: int = 60) -> Optional[RunRecord]:
+def ena_run_record(
+    session: requests.Session, run_accession: str, timeout: int = 60
+) -> RunRecord | None:
     params = {
         "accession": run_accession,
         "result": "read_run",
@@ -171,7 +172,7 @@ def ena_run_record(session: requests.Session, run_accession: str, timeout: int =
     if not fastq_ftp:
         return None
 
-    urls: List[str] = []
+    urls: list[str] = []
     for part in fastq_ftp.split(";"):
         part = part.strip()
         if not part:
@@ -187,7 +188,9 @@ def ena_run_record(session: requests.Session, run_accession: str, timeout: int =
         return None
 
     sample_accession = row.get("sample_accession") or run_accession
-    library_layout = (row.get("library_layout") or "").upper() or ("PAIRED" if len(urls) >= 2 else "SINGLE")
+    library_layout = (row.get("library_layout") or "").upper() or (
+        "PAIRED" if len(urls) >= 2 else "SINGLE"
+    )
 
     return RunRecord(
         run_accession=run_accession,
@@ -198,22 +201,22 @@ def ena_run_record(session: requests.Session, run_accession: str, timeout: int =
 
 
 class GalaxyClient:
-    def __init__(self, base_url: str, api_key: str, session: Optional[requests.Session] = None):
+    def __init__(self, base_url: str, api_key: str, session: requests.Session | None = None):
         self.base_url = base_url.rstrip("/")
         self.session = session or build_retry_session()
         self.session.headers.update({"x-api-key": api_key, "Content-Type": "application/json"})
 
-    def _get(self, path: str, params: Optional[Dict[str, str]] = None):
+    def _get(self, path: str, params: dict[str, str] | None = None):
         resp = self.session.get(f"{self.base_url}{path}", params=params, timeout=120)
         resp.raise_for_status()
         return resp.json()
 
-    def _post(self, path: str, payload: Dict):
+    def _post(self, path: str, payload: dict):
         resp = self.session.post(f"{self.base_url}{path}", data=json.dumps(payload), timeout=120)
         resp.raise_for_status()
         return resp.json()
 
-    def list_workflows(self) -> List[Dict]:
+    def list_workflows(self) -> list[dict]:
         return self._get("/api/workflows")
 
     def find_workflow_id_by_name(self, workflow_name: str) -> str:
@@ -231,7 +234,7 @@ class GalaxyClient:
         data = self._post("/api/histories", {"name": name})
         return data["id"]
 
-    def get_workflow_input_id(self, workflow_id: str, input_label: Optional[str]) -> str:
+    def get_workflow_input_id(self, workflow_id: str, input_label: str | None) -> str:
         wf = self._get(f"/api/workflows/{workflow_id}")
         inputs = wf.get("inputs", {})
         if not inputs:
@@ -261,7 +264,9 @@ class GalaxyClient:
             raise RuntimeError(f"No outputs returned when fetching {url}")
         return outputs[0]["id"]
 
-    def create_pair_collection(self, history_id: str, forward_id: str, reverse_id: str, name: str) -> str:
+    def create_pair_collection(
+        self, history_id: str, forward_id: str, reverse_id: str, name: str
+    ) -> str:
         payload = {
             "history_id": history_id,
             "collection_type": "paired",
@@ -274,7 +279,9 @@ class GalaxyClient:
         data = self._post("/api/dataset_collections", payload)
         return data["id"]
 
-    def invoke_workflow(self, workflow_id: str, history_id: str, inputs: Dict[str, Dict[str, str]]) -> str:
+    def invoke_workflow(
+        self, workflow_id: str, history_id: str, inputs: dict[str, dict[str, str]]
+    ) -> str:
         payload = {
             "history_id": history_id,
             "inputs": inputs,
@@ -283,14 +290,16 @@ class GalaxyClient:
         return data.get("id", "")
 
 
-def group_runs_by_sample(run_records: List[RunRecord]) -> Dict[str, List[RunRecord]]:
-    grouped: Dict[str, List[RunRecord]] = {}
+def group_runs_by_sample(run_records: list[RunRecord]) -> dict[str, list[RunRecord]]:
+    grouped: dict[str, list[RunRecord]] = {}
     for record in run_records:
         grouped.setdefault(record.sample_accession, []).append(record)
     return grouped
 
 
-def resolve_workflow_id(client: GalaxyClient, workflow_id: Optional[str], workflow_name: Optional[str]) -> Optional[str]:
+def resolve_workflow_id(
+    client: GalaxyClient, workflow_id: str | None, workflow_name: str | None
+) -> str | None:
     if workflow_id:
         return workflow_id
     if workflow_name:
@@ -327,15 +336,21 @@ def parse_args() -> argparse.Namespace:
         help="Galaxy paired-end workflow name if ID not supplied",
     )
 
-    parser.add_argument("--single-input-label", default="Reads FASTQ", help="Single-end workflow read input")
-    parser.add_argument("--paired-input-label", default="Reads Pair", help="Paired-end workflow read input")
+    parser.add_argument(
+        "--single-input-label", default="Reads FASTQ", help="Single-end workflow read input"
+    )
+    parser.add_argument(
+        "--paired-input-label", default="Reads Pair", help="Paired-end workflow read input"
+    )
     parser.add_argument(
         "--reference-input-label",
         default="Reference FASTA",
         help="Workflow label/name for reference input",
     )
     parser.add_argument("--reference-url", help="Optional reference FASTA URL to fetch into Galaxy")
-    parser.add_argument("--reference-dataset-id", help="Optional existing Galaxy dataset ID for reference FASTA")
+    parser.add_argument(
+        "--reference-dataset-id", help="Optional existing Galaxy dataset ID for reference FASTA"
+    )
 
     parser.add_argument("--history-id", help="Existing Galaxy history ID")
     parser.add_argument("--history-name", default="Rice_variant_calling_inputs")
@@ -345,8 +360,12 @@ def parse_args() -> argparse.Namespace:
         help="Create one Galaxy history per sample accession",
     )
 
-    parser.add_argument("--state-file", default=".ncbi_to_galaxy_state.json", help="State file for resume mode")
-    parser.add_argument("--reset-state", action="store_true", help="Ignore previous state and start fresh")
+    parser.add_argument(
+        "--state-file", default=".ncbi_to_galaxy_state.json", help="State file for resume mode"
+    )
+    parser.add_argument(
+        "--reset-state", action="store_true", help="Ignore previous state and start fresh"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Do not upload or invoke workflow")
     return parser.parse_args()
 
@@ -381,7 +400,9 @@ def main() -> int:
         return 0
 
     try:
-        run_accessions = sorted(esummary_sra_runs(ncbi_session, sra_ids, args.email, args.ncbi_api_key))
+        run_accessions = sorted(
+            esummary_sra_runs(ncbi_session, sra_ids, args.email, args.ncbi_api_key)
+        )
     except RequestException as exc:
         print(f"ERROR failed to resolve SRA run accessions: {exc}", file=sys.stderr)
         return 1
@@ -393,7 +414,7 @@ def main() -> int:
     if not run_accessions:
         return 0
 
-    run_records: List[RunRecord] = []
+    run_records: list[RunRecord] = []
     for run in run_accessions:
         if run in state.processed_runs:
             continue
@@ -425,23 +446,31 @@ def main() -> int:
 
     galaxy = GalaxyClient(args.galaxy_url, args.galaxy_api_key, session=build_retry_session())
 
-    single_workflow_id = resolve_workflow_id(galaxy, args.single_workflow_id, args.single_workflow_name)
-    paired_workflow_id = resolve_workflow_id(galaxy, args.paired_workflow_id, args.paired_workflow_name)
+    single_workflow_id = resolve_workflow_id(
+        galaxy, args.single_workflow_id, args.single_workflow_name
+    )
+    paired_workflow_id = resolve_workflow_id(
+        galaxy, args.paired_workflow_id, args.paired_workflow_name
+    )
 
     if not single_workflow_id:
         print("ERROR no single-end workflow configured", file=sys.stderr)
         return 1
 
     single_input_id = galaxy.get_workflow_input_id(single_workflow_id, args.single_input_label)
-    reference_input_single_id = galaxy.get_workflow_input_id(single_workflow_id, args.reference_input_label)
+    reference_input_single_id = galaxy.get_workflow_input_id(
+        single_workflow_id, args.reference_input_label
+    )
 
     paired_input_id = None
     reference_input_paired_id = None
     if paired_workflow_id:
         paired_input_id = galaxy.get_workflow_input_id(paired_workflow_id, args.paired_input_label)
-        reference_input_paired_id = galaxy.get_workflow_input_id(paired_workflow_id, args.reference_input_label)
+        reference_input_paired_id = galaxy.get_workflow_input_id(
+            paired_workflow_id, args.reference_input_label
+        )
 
-    history_cache: Dict[str, str] = {}
+    history_cache: dict[str, str] = {}
 
     def history_for_sample(sample_accession: str) -> str:
         if args.history_id:
@@ -456,15 +485,17 @@ def main() -> int:
             history_cache[key] = galaxy.create_history(f"{args.history_name}_{sample_accession}")
         return history_cache[key]
 
-    reference_cache: Dict[str, str] = {}
+    reference_cache: dict[str, str] = {}
 
-    def reference_for_history(history_id: str) -> Optional[str]:
+    def reference_for_history(history_id: str) -> str | None:
         if args.reference_dataset_id:
             return args.reference_dataset_id
         if not args.reference_url:
             return None
         if history_id not in reference_cache:
-            reference_cache[history_id] = galaxy.fetch_url_to_history(history_id, args.reference_url, "reference.fasta")
+            reference_cache[history_id] = galaxy.fetch_url_to_history(
+                history_id, args.reference_url, "reference.fasta"
+            )
         return reference_cache[history_id]
 
     uploaded = 0
@@ -494,14 +525,21 @@ def main() -> int:
                         record.fastq_urls[1],
                         f"{record.run_accession}_R2.fastq.gz",
                     )
-                    pair_id = galaxy.create_pair_collection(history_id, fwd, rev, f"{record.run_accession}_pair")
+                    pair_id = galaxy.create_pair_collection(
+                        history_id, fwd, rev, f"{record.run_accession}_pair"
+                    )
                     uploaded += 2
 
                     workflow_inputs = {paired_input_id: {"src": "hdca", "id": pair_id}}
                     if ref_dataset_id:
-                        workflow_inputs[reference_input_paired_id] = {"src": "hda", "id": ref_dataset_id}
+                        workflow_inputs[reference_input_paired_id] = {
+                            "src": "hda",
+                            "id": ref_dataset_id,
+                        }
 
-                    invocation_id = galaxy.invoke_workflow(paired_workflow_id, history_id, workflow_inputs)
+                    invocation_id = galaxy.invoke_workflow(
+                        paired_workflow_id, history_id, workflow_inputs
+                    )
                     invoked += 1
                     print(
                         f"Sample {sample_accession}: paired run {record.run_accession} uploaded, invocation={invocation_id}"
@@ -515,9 +553,14 @@ def main() -> int:
                     uploaded += 1
                     workflow_inputs = {single_input_id: {"src": "hda", "id": read_id}}
                     if ref_dataset_id:
-                        workflow_inputs[reference_input_single_id] = {"src": "hda", "id": ref_dataset_id}
+                        workflow_inputs[reference_input_single_id] = {
+                            "src": "hda",
+                            "id": ref_dataset_id,
+                        }
 
-                    invocation_id = galaxy.invoke_workflow(single_workflow_id, history_id, workflow_inputs)
+                    invocation_id = galaxy.invoke_workflow(
+                        single_workflow_id, history_id, workflow_inputs
+                    )
                     invoked += 1
                     print(
                         f"Sample {sample_accession}: single run {record.run_accession} uploaded, invocation={invocation_id}"

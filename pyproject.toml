@@ -12,7 +12,8 @@ authors = [
   { name = "Project Maintainers" }
 ]
 dependencies = [
-  "requests>=2.31.0"
+  "requests>=2.31.0",
+  "defusedxml>=0.7.1"
 ]
 
 [project.optional-dependencies]

@@ -1,5 +1,9 @@
 [allowlist]
 description = "Allow known test placeholders"
 paths = [
-  '''tests/.*'''
+  '''tests/.*''',
+  '''\.venv/.*''',
+  '''\.git/.*''',
+  '''.*__pycache__/.*''',
+  '''.*\.egg-info/.*'''
 ]

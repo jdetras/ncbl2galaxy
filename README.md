@@ -74,7 +74,7 @@ Local:
 ```bash
 ruff check .
 python -m unittest discover -s tests -p "test_*.py" -v
-bandit -r . -x tests,.venv
+bandit -r ncbi_to_galaxy.py
 pip-audit
 ```
 
