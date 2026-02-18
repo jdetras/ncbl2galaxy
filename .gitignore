@@ -9,3 +9,4 @@ htmlcov/
 venv/
 .env
 .DS_Store
+*.egg-info/

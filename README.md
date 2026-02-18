@@ -1,7 +1,7 @@
 # NCBI to Galaxy: Rice Variant Calling Automation
 
-[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml)
-[![Security](https://github.com/<OWNER>/<REPO>/actions/workflows/security.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/security.yml)
+[![CI](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/ci.yml)
+[![Security](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/security.yml/badge.svg)](https://github.com/YOUR_ORG_OR_USER/YOUR_REPO/actions/workflows/security.yml)
 
 Automates discovery of rice-related sequencing runs from NCBI literature and enqueues Galaxy variant-calling workflows with resumable execution and security-focused engineering defaults.
 
@@ -14,11 +14,11 @@ Automates discovery of rice-related sequencing runs from NCBI literature and enq
 - CI and security checks (CodeQL, Bandit, pip-audit, Gitleaks)
 
 ## Repository layout
-- `/Users/jdetras/Documents/work/codex/agent2/ncbi_to_galaxy.py`: main automation script
-- `/Users/jdetras/Documents/work/codex/agent2/workflows/rice_variant_calling.ga`: single-end workflow template
-- `/Users/jdetras/Documents/work/codex/agent2/workflows/rice_variant_calling_paired.ga`: paired-end workflow template
-- `/Users/jdetras/Documents/work/codex/agent2/docs/ARCHITECTURE.md`: architecture and compatibility matrix
-- `/Users/jdetras/Documents/work/codex/agent2/SECURITY.md`: vulnerability reporting policy
+- `ncbi_to_galaxy.py`: main automation script
+- `workflows/rice_variant_calling.ga`: single-end workflow template
+- `workflows/rice_variant_calling_paired.ga`: paired-end workflow template
+- `docs/ARCHITECTURE.md`: architecture and compatibility matrix
+- `SECURITY.md`: vulnerability reporting policy
 
 ## Prerequisites
 - Python 3.10+
@@ -37,8 +37,8 @@ pre-commit install
 ## Import Galaxy workflows
 1. In Galaxy, go to `Workflows` -> `Import`.
 2. Upload:
-- `/Users/jdetras/Documents/work/codex/agent2/workflows/rice_variant_calling.ga`
-- `/Users/jdetras/Documents/work/codex/agent2/workflows/rice_variant_calling_paired.ga`
+- `workflows/rice_variant_calling.ga`
+- `workflows/rice_variant_calling_paired.ga`
 3. Keep names unchanged unless you pass explicit workflow IDs.
 4. If tools are missing, remap local equivalents in the workflow editor.
 
@@ -79,11 +79,11 @@ pip-audit
 ```
 
 GitHub:
-- CI workflow: `/Users/jdetras/Documents/work/codex/agent2/.github/workflows/ci.yml`
-- Security workflow: `/Users/jdetras/Documents/work/codex/agent2/.github/workflows/security.yml`
-- Dependabot config: `/Users/jdetras/Documents/work/codex/agent2/.github/dependabot.yml`
+- CI workflow: `.github/workflows/ci.yml`
+- Security workflow: `.github/workflows/security.yml`
+- Dependabot config: `.github/dependabot.yml`
 
 ## Governance
-- License: `/Users/jdetras/Documents/work/codex/agent2/LICENSE`
-- Contributing guide: `/Users/jdetras/Documents/work/codex/agent2/CONTRIBUTING.md`
-- Security policy: `/Users/jdetras/Documents/work/codex/agent2/SECURITY.md`
+- License: `LICENSE`
+- Contributing guide: `CONTRIBUTING.md`
+- Security policy: `SECURITY.md`
